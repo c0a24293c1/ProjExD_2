@@ -37,18 +37,18 @@ def gameover(screen: pg.Surface) -> None:
     """
     # 黒い半透明のSurface
     black_sfc = pg.Surface((WIDTH, HEIGHT))
-    black_sfc.set_alpha(200)  # 透明度200
-    black_sfc.fill((0, 0, 0))  # fillメソッド(Surfaceを一色に塗りつぶす)
+    black_sfc.set_alpha(200)
+    black_sfc.fill((0, 0, 0))
     
     # 「Game Over」の文字
-    fonto = pg.font.Font(None, 80)  # フォントサイズ80
-    txt_sfc = fonto.render("Game Over", True, (255, 255, 255))  # renderメソッド(指定職の文字列を書いたSurfaceインスタンスを生成)
-    txt_rct = txt_sfc.get_rect()  # get_rectメソッド(Surfaceが存在する範囲を取得)
-    txt_rct.center = WIDTH // 2, HEIGHT // 2  # 中央寄せ
+    fonto = pg.font.Font(None, 80)
+    txt_sfc = fonto.render("Game Over", True, (255, 255, 255))
+    txt_rct = txt_sfc.get_rect()
+    txt_rct.center = WIDTH // 2, HEIGHT // 2
     
     # 泣いているこうかとん画像
     kk_img = pg.image.load("fig/8.png") 
-    kk_rct1 = kk_img.get_rect() #Surfaceに対応する画像Rectを取得
+    kk_rct1 = kk_img.get_rect()
     kk_rct1.center = WIDTH // 2 - 200, HEIGHT // 2 
     kk_rct2 = kk_img.get_rect()
     kk_rct2.center = WIDTH // 2 + 200, HEIGHT // 2 
@@ -69,7 +69,7 @@ def get_kk_imgs() -> dict[tuple[int, int], pg.Surface]:
     """
     kk_img = pg.image.load("fig/3.png")
     kk_imgs = {
-        (0, 0): pg.transform.rotozoom(kk_img, 0, 0.9),  # transform.rotozoom(画像Surface，回転角度，倍率)
+        (0, 0): pg.transform.rotozoom(kk_img, 0, 0.9),
         (-5, 0): pg.transform.rotozoom(kk_img, 0, 0.9),    # 左
         (-5, +5): pg.transform.rotozoom(kk_img, 45, 0.9),  # 左下
         (0, +5): pg.transform.rotozoom(kk_img, 90, 0.9),   # 下
@@ -92,9 +92,6 @@ def main():
     kk_rct = kk_img.get_rect()
     kk_rct.center = 300, 200
 
-    kk_img = pg.transform.rotozoom(pg.image.load("fig/3.png"), 0, 0.9)
-    kk_rct = kk_img.get_rect()
-    kk_rct.center = 300, 200
     bb_img = pg.Surface((20, 20))  # 空のSurface
     pg.draw.circle(bb_img, (255, 0, 0), (10, 10), 10)  # 半径10の赤い円を描画
     bb_img.set_colorkey((0, 0, 0))  # 黒色を透過色に設定
@@ -102,20 +99,24 @@ def main():
     bb_rct.centerx = random.randint(0, WIDTH)  # 爆弾横座標
     bb_rct.centery = random.randint(0, HEIGHT)  # 爆弾縦座標
     vx, vy = +5, +5  # 爆弾の横速度，縦速度
+    
     clock = pg.time.Clock()
     tmr = 0
+    
     while True:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return
-            
-        # 演習1：衝突判定とゲームオーバー呼び出し
-        if kk_rct.colliderect(bb_rct):  # オブジェクトの重なり
+        
+        # 背景描画
+        screen.blit(bg_img, [0, 0]) 
+
+        # 衝突判定（ここで当たっていたらgameoverを呼ぶ）
+        if kk_rct.colliderect(bb_rct):
             gameover(screen)
             return
 
-        screen.blit(bg_img, [0, 0]) 
-
+        # キー入力とこうかとんの移動
         key_lst = pg.key.get_pressed()
         sum_mv = [0, 0]
         for key, mv in DELTA.items():
@@ -129,31 +130,8 @@ def main():
         if check_bound(kk_rct) != (True, True):  # 画面内外の判定
             kk_rct.move_ip(-sum_mv[0], -sum_mv[1])
         screen.blit(kk_img, kk_rct)  
-            
-        if kk_rct.colliderect(bb_rct):  # こうかとんと爆弾が衝突したら
-            print("ゲームオーバー")
-            return
 
-        screen.blit(bg_img, [0, 0]) 
-
-        key_lst = pg.key.get_pressed()
-        sum_mv = [0, 0]
-        # if key_lst[pg.K_UP]:
-        #     sum_mv[1] -= 5
-        # if key_lst[pg.K_DOWN]:
-        #     sum_mv[1] += 5
-        # if key_lst[pg.K_LEFT]:
-        #     sum_mv[0] -= 5
-        # if key_lst[pg.K_RIGHT]:
-        #     sum_mv[0] += 5
-        for key, mv in DELTA.items():
-            if key_lst[key]:
-                sum_mv[0] += mv[0]  # 横方向の移動量
-                sum_mv[1] += mv[1]  # 縦方向の移動量
-        kk_rct.move_ip(sum_mv)
-        if check_bound(kk_rct) != (True, True):  # 画面外なら
-            kk_rct.move_ip(-sum_mv[0], -sum_mv[1])  # 移動をなかったことにする
-        screen.blit(kk_img, kk_rct)
+        # 爆弾の移動
         yoko, tate = check_bound(bb_rct)
         if not yoko:  # 横方向にはみ出ていたら
             vx *= -1
@@ -161,6 +139,7 @@ def main():
             vy *= -1
         bb_rct.move_ip(vx, vy)
         screen.blit(bb_img, bb_rct)
+        
         pg.display.update()
         tmr += 1
         clock.tick(50)
