@@ -62,6 +62,7 @@ def gameover(screen: pg.Surface) -> None:
     pg.display.update()
     time.sleep(5)
 
+
 def get_kk_imgs() -> dict[tuple[int, int], pg.Surface]:
     """
     移動量の合計値タプルに対応する向きの画像Surfaceを返す辞書
