@@ -1,6 +1,7 @@
 import os
 import random 
 import sys
+import time
 import pygame as pg
 
 
@@ -18,7 +19,7 @@ def check_bound(rct: pg.Rect) -> tuple[bool, bool]:
     """
     引数：こうかとんRectまたは爆弾Rect
     戻り値：判定結果タプル（横方向，縦方向）
-    画面内ならTrue，画面外ならFalse
+    画面内ならTrue,画面外ならFalse
     """
     yoko, tate = True, True
     if rct.left < 0 or WIDTH <rct.right:  # 横方向のはみ出しチェック
@@ -27,6 +28,39 @@ def check_bound(rct: pg.Rect) -> tuple[bool, bool]:
         tate = False
     return yoko, tate
 
+# 演習1：ゲームオーバー画面
+def gameover(screen: pg.Surface) -> None:
+    """
+    ゲームオーバー時に，半透明の黒い画面上に
+    「Game Over」の文字と，泣いているこうかとん画像を並べて表示する
+    引数 screen：画面Surface
+    """
+    # 黒い半透明のSurface
+    black_sfc = pg.Surface((WIDTH, HEIGHT))
+    black_sfc.set_alpha(200)  # 透明度200
+    black_sfc.fill((0, 0, 0))  # fillメソッド(Surfaceを一色に塗りつぶす)
+    
+    # 「Game Over」の文字
+    fonto = pg.font.Font(None, 80)  # フォントサイズ80
+    txt_sfc = fonto.render("Game Over", True, (255, 255, 255))  # renderメソッド(指定職の文字列を書いたSurfaceインスタンスを生成)
+    txt_rct = txt_sfc.get_rect()  # get_rectメソッド(Surfaceが存在する範囲を取得)
+    txt_rct.center = WIDTH // 2, HEIGHT // 2  # 中央寄せ
+    
+    # 泣いているこうかとん画像
+    kk_img = pg.image.load("fig/8.png") 
+    kk_rct1 = kk_img.get_rect() #Surfaceに対応する画像Rectを取得
+    kk_rct1.center = WIDTH // 2 - 200, HEIGHT // 2 
+    kk_rct2 = kk_img.get_rect()
+    kk_rct2.center = WIDTH // 2 + 200, HEIGHT // 2 
+    
+    # 描画
+    screen.blit(black_sfc, (0, 0)) 
+    screen.blit(txt_sfc, txt_rct)  
+    screen.blit(kk_img, kk_rct1)  
+    screen.blit(kk_img, kk_rct2)   
+    
+    pg.display.update()
+    time.sleep(5)
 
 def main():
     pg.display.set_caption("逃げろ！こうかとん")
@@ -46,8 +80,22 @@ def main():
     tmr = 0
     while True:
         for event in pg.event.get():
-            if event.type == pg.QUIT: 
+            if event.type == pg.QUIT:
                 return
+            
+        # 演習1：衝突判定とゲームオーバー呼び出し
+        if kk_rct.colliderect(bb_rct):  # オブジェクトの重なり
+            gameover(screen)
+            return
+
+        screen.blit(bg_img, [0, 0]) 
+
+        key_lst = pg.key.get_pressed()
+        sum_mv = [0, 0]
+        for key, mv in DELTA.items():
+            if key_lst[key]:
+                sum_mv[0] += mv[0]  
+                sum_mv[1] += mv[1]  
             
         if kk_rct.colliderect(bb_rct):  # こうかとんと爆弾が衝突したら
             print("ゲームオーバー")
