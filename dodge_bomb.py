@@ -56,16 +56,42 @@ def gameover(screen: pg.Surface) -> None:
     # 描画
     screen.blit(black_sfc, (0, 0)) 
     screen.blit(txt_sfc, txt_rct)  
-    screen.blit(kk_img, kk_rct1)  
+    screen.blit(kk_img, kk_rct1)   
     screen.blit(kk_img, kk_rct2)   
     
     pg.display.update()
     time.sleep(5)
 
+def get_kk_imgs() -> dict[tuple[int, int], pg.Surface]:
+    """
+    移動量の合計値タプルに対応する向きの画像Surfaceを返す辞書
+    戻り値：キーが移動量タプル、値がrotozoomされたSurfaceの辞書
+    """
+    kk_img = pg.image.load("fig/3.png")
+    kk_imgs = {
+        (0, 0): pg.transform.rotozoom(kk_img, 0, 0.9),  # transform.rotozoom(画像Surface，回転角度，倍率)
+        (-5, 0): pg.transform.rotozoom(kk_img, 0, 0.9),    # 左
+        (-5, +5): pg.transform.rotozoom(kk_img, 45, 0.9),  # 左下
+        (0, +5): pg.transform.rotozoom(kk_img, 90, 0.9),   # 下
+        (+5, +5): pg.transform.rotozoom(kk_img, 135, 0.9), # 右下
+        (+5, 0): pg.transform.flip(kk_img, True, False),   # 右（反転）
+        (+5, -5): pg.transform.rotozoom(pg.transform.flip(kk_img, True, False), 45, 0.9), # 右上
+        (0, -5): pg.transform.rotozoom(pg.transform.flip(kk_img, True, False), 90, 0.9),  # 上
+        (-5, -5): pg.transform.rotozoom(kk_img, -45, 0.9), # 左上
+    }
+    return kk_imgs    
+
 def main():
     pg.display.set_caption("逃げろ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
-    bg_img = pg.image.load("fig/pg_bg.jpg")    
+    bg_img = pg.image.load("fig/pg_bg.jpg")  
+
+    # 演習3：こうかとん画像の辞書を取得
+    kk_imgs = get_kk_imgs()
+    kk_img = kk_imgs[(0, 0)] 
+    kk_rct = kk_img.get_rect()
+    kk_rct.center = 300, 200
+
     kk_img = pg.transform.rotozoom(pg.image.load("fig/3.png"), 0, 0.9)
     kk_rct = kk_img.get_rect()
     kk_rct.center = 300, 200
@@ -95,7 +121,14 @@ def main():
         for key, mv in DELTA.items():
             if key_lst[key]:
                 sum_mv[0] += mv[0]  
-                sum_mv[1] += mv[1]  
+                sum_mv[1] += mv[1]
+        
+        # 演習3：移動方向に応じてこうかとん画像を変更
+        kk_img = kk_imgs[tuple(sum_mv)]
+        kk_rct.move_ip(sum_mv)
+        if check_bound(kk_rct) != (True, True):  # 画面内外の判定
+            kk_rct.move_ip(-sum_mv[0], -sum_mv[1])
+        screen.blit(kk_img, kk_rct)  
             
         if kk_rct.colliderect(bb_rct):  # こうかとんと爆弾が衝突したら
             print("ゲームオーバー")
